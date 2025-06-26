@@ -235,38 +235,57 @@
         }
         
         // --- Функции ---
+// В файле script.js
+// ПОЛНОСТЬЮ ЗАМЕНИТЕ СТАРУЮ ФУНКЦИЮ НА ЭТУ:
+
 function generateTerrain() {
-    terrain = new Array(canvas.width).fill(canvas.height);
-    const isPortrait = canvas.height > canvas.width;
-    const startY = isPortrait ? canvas.height * 0.6 : canvas.height * 0.7;
-    let y = startY;
+    terrain = new Array(canvas.width).fill(0);
+    const baseHeight = canvas.height * 0.8; // Средний уровень земли (ниже, чтобы было место для холмов)
+    const minHeight = canvas.height * 0.3;   // Минимально возможная высота земли
+    const maxHeight = canvas.height - 20;    // Максимально возможная высота земли
 
-    // --- ИЗМЕНЕНИЕ 1: Увеличиваем "скалистость" для альбомной ориентации ---
-    // В альбомном режиме (isPortrait = false), высота canvas меньше,
-    // что делало горы более гладкими. Мы увеличим начальную величину
-    // смещения (magnitude) для альбомного режима, чтобы компенсировать это.
-    const initialMagnitude = isPortrait ? canvas.height / 3 : canvas.height / 1.5;
-    // Вы можете поэкспериментировать со значением, например, canvas.height / 1.5 для еще более острых гор
-    // --- КОНЕЦ ИЗМЕНЕНИЯ 1 ---
+    // --- НАСТРОЙКИ ГЕНЕРАЦИИ ---
+    // Здесь мы описываем "волны", из которых будут состоять наши холмы.
+    // amplitude: высота волны (насколько высокий холм).
+    // wavelength: длина волны (насколько широкий холм).
+    // phase: случайное смещение, чтобы холмы каждый раз были в разных местах.
+    const hills = [
+        // 1. Крупные, пологие холмы - основа рельефа
+        {
+            amplitude: canvas.height * 0.25,      // Высота холма = 25% от высоты экрана
+            wavelength: canvas.width * 0.8,       // Длина = 80% от ширины экрана (1-2 холма на экран)
+            phase: Math.random() * Math.PI * 2
+        },
+        // 2. Холмы среднего размера для разнообразия
+        {
+            amplitude: canvas.height * 0.1,       // Высота = 10%
+            wavelength: canvas.width * 0.3,       // Длина = 30%
+            phase: Math.random() * Math.PI * 2
+        },
+        // 3. Мелкие неровности для детализации
+        {
+            amplitude: canvas.height * 0.03,      // Совсем небольшая высота
+            wavelength: canvas.width * 0.08,      // Очень короткие
+            phase: Math.random() * Math.PI * 2
+        }
+    ];
 
-    const roughness = 0.6;
-    function displace(arr, start, end, magnitude) {
-        if (end - start < 2) return;
-        const mid = Math.floor((start + end) / 2);
-        if (mid <= start || mid >= end) return;
-        arr[mid] = (arr[start] + arr[end]) / 2 + (Math.random() - 0.5) * magnitude;
-        displace(arr, start, mid, magnitude * roughness);
-        displace(arr, mid, end, magnitude * roughness);
-    }
-    terrain[0] = y;
-    terrain[canvas.width - 1] = y * (Math.random() * 0.4 + 0.8);
+    // Проходим по всей ширине канваса и вычисляем высоту в каждой точке
+    for (let i = 0; i < canvas.width; i++) {
+        let currentHeight = baseHeight;
 
-    // Используем новую переменную initialMagnitude вместо canvas.height/3
-    if (canvas.width > 1) displace(terrain, 0, canvas.width - 1, initialMagnitude);
+        // Складываем все наши волны
+        hills.forEach(hill => {
+            // Формула синусоиды для создания волны
+            const sineWave = hill.amplitude * Math.sin((i / hill.wavelength) * 2 * Math.PI + hill.phase);
+            currentHeight += sineWave;
+        });
 
-    for (let i = 0; i < terrain.length; i++) {
-        if (terrain[i] > canvas.height - 20) terrain[i] = canvas.height - 20;
-        if (terrain[i] < canvas.height / 3) terrain[i] = canvas.height / 3;
+        // Ограничиваем высоту, чтобы земля не уходила за пределы экрана
+        if (currentHeight < minHeight) currentHeight = minHeight;
+        if (currentHeight > maxHeight) currentHeight = maxHeight;
+
+        terrain[i] = currentHeight;
     }
 }
         
