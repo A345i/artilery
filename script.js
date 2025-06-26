@@ -235,28 +235,40 @@
         }
         
         // --- Функции ---
-        function generateTerrain() {
-            terrain = new Array(canvas.width).fill(canvas.height);
-            const isPortrait = canvas.height > canvas.width;
-            const startY = isPortrait ? canvas.height * 0.6 : canvas.height * 0.7;
-            let y = startY;
+function generateTerrain() {
+    terrain = new Array(canvas.width).fill(canvas.height);
+    const isPortrait = canvas.height > canvas.width;
+    const startY = isPortrait ? canvas.height * 0.6 : canvas.height * 0.7;
+    let y = startY;
 
-            const roughness = 0.6;
-            function displace(arr, start, end, magnitude) {
-                if (end - start < 2) return;
-                const mid = Math.floor((start + end) / 2);
-                if (mid <= start || mid >= end) return;
-                arr[mid] = (arr[start] + arr[end]) / 2 + (Math.random() - 0.5) * magnitude;
-                displace(arr, start, mid, magnitude * roughness);
-                displace(arr, mid, end, magnitude * roughness);
-            }
-            terrain[0] = y; terrain[canvas.width-1] = y * (Math.random()*0.4 + 0.8);
-            if (canvas.width > 1) displace(terrain, 0, canvas.width - 1, canvas.height/3);
-            for (let i = 0; i < terrain.length; i++) {
-                if(terrain[i] > canvas.height - 20) terrain[i] = canvas.height - 20;
-                if(terrain[i] < canvas.height / 3) terrain[i] = canvas.height / 3;
-            }
-        }
+    // --- ИЗМЕНЕНИЕ 1: Увеличиваем "скалистость" для альбомной ориентации ---
+    // В альбомном режиме (isPortrait = false), высота canvas меньше,
+    // что делало горы более гладкими. Мы увеличим начальную величину
+    // смещения (magnitude) для альбомного режима, чтобы компенсировать это.
+    const initialMagnitude = isPortrait ? canvas.height / 3 : canvas.height / 1.5;
+    // Вы можете поэкспериментировать со значением, например, canvas.height / 1.5 для еще более острых гор
+    // --- КОНЕЦ ИЗМЕНЕНИЯ 1 ---
+
+    const roughness = 0.6;
+    function displace(arr, start, end, magnitude) {
+        if (end - start < 2) return;
+        const mid = Math.floor((start + end) / 2);
+        if (mid <= start || mid >= end) return;
+        arr[mid] = (arr[start] + arr[end]) / 2 + (Math.random() - 0.5) * magnitude;
+        displace(arr, start, mid, magnitude * roughness);
+        displace(arr, mid, end, magnitude * roughness);
+    }
+    terrain[0] = y;
+    terrain[canvas.width - 1] = y * (Math.random() * 0.4 + 0.8);
+
+    // Используем новую переменную initialMagnitude вместо canvas.height/3
+    if (canvas.width > 1) displace(terrain, 0, canvas.width - 1, initialMagnitude);
+
+    for (let i = 0; i < terrain.length; i++) {
+        if (terrain[i] > canvas.height - 20) terrain[i] = canvas.height - 20;
+        if (terrain[i] < canvas.height / 3) terrain[i] = canvas.height / 3;
+    }
+}
         
         function updateTerrainPhysics() {
             if (terrainSettleCountdown <= 0) return;

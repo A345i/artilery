@@ -14,21 +14,28 @@ body, html {
 
 .ui-panel {
     display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    padding: 0.5rem 1rem;
+    justify-content: center; /* Центрируем, чтобы на узких экранах было красиво */
+    flex-wrap: wrap; /* Позволяем элементам переноситься на новую строку */
+    padding: 0.4rem; /* Уменьшаем вертикальные отступы */
     background-color: rgba(0,0,0,0.5);
     width: 100%;
     box-sizing: border-box;
-    font-size: clamp(0.8rem, 2.5vw, 1rem);
-    gap: 0.5rem;
+    font-size: clamp(0.7rem, 2.2vw, 0.9rem); /* Можно слегка уменьшить шрифт */
+    gap: 0.3rem 1rem; /* Вертикальный и горизонтальный отступ между элементами */
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 1);
-    min-height: 5rem;
+    min-height: unset; /* <-- САМОЕ ВАЖНОЕ: убираем минимальную высоту */
     align-items: center;
 }
 
+    /* Этот стиль не позволит тексту внутри одного инфо-блока переноситься на новую строку */
+    .ui-panel > div {
+        white-space: nowrap;
+    }
+
+/* Этот стиль мы уже немного изменили в прошлый раз, он остается актуальным */
 #player-bonus-info {
     flex-grow: 1;
+    text-align: center; /* Центрируем текст, если этот блок окажется один в строке */
 }
 
 #player-info {
