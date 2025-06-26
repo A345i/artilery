@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Игра Артиллерия</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <meta name="theme-color" content="#00001a" />
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+    <div class="ui-panel">
+        <div id="player-info">СССР 🛡️: 100</div>
+        <div id="angle-info">Угол: 45</div>
+        <div id="force-info">Сила: 50</div>
+        <div id="wind-info">Ветер: 0</div>
+        <div id="cpu-info">USA 🛡️: 100</div>
+    </div>
+    <div class="ui-panel">
+        <div id="player-bonus-info">Бонусы: Топливо: 100 | Мощь: 0 | Щит: 0 | Кассета: 0</div>
+        <div id="aiming-info" class="keyboard-only">Прицел(T): ВЫКЛ</div>
+        <div id="restart-info" class="keyboard-only">R - Рестарт</div>
+    </div>
+
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="messageBox" class="message-box hidden"></div>
+        <div class="touch-controls">
+            <div class="control-group">
+                <button id="move-left-btn">⇦</button>
+                <button id="move-right-btn">⇨</button>
+            </div>
+            <div class="control-group">
+                <button id="angle-down-btn">∠-</button>
+                <button id="angle-up-btn">∠+</button>
+            </div>
+            <button id="fire-button">ОГОНЬ</button>
+            <div class="control-group">
+                <button id="force-down-btn">S-</button>
+                <button id="force-up-btn">S+</button>
+            </div>
+            <div class="control-group">
+                <button id="aim-toggle-btn">🎯</button>
+                <button id="restart-btn">🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js" defer></script>
+</body>
+</html>
