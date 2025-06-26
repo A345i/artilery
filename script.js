@@ -399,21 +399,25 @@ function spawnBonus() {
             terrainSettleCountdown = TERRAIN_SETTLE_FRAMES;
         }
         
-        function updateUI() {
-            if(!player || !cpu) return;
-            playerInfo.innerHTML = `СССР 🛡️: ${Math.round(player.health)}`;
-            cpuInfo.innerHTML = `USA 🛡️: ${Math.round(cpu.health)}`;
+function updateUI() {
+    if (!player || !cpu) return;
+    // Оборачиваем числа в <span class="ui-value">
+    playerInfo.innerHTML = `СССР 🛡️: <span class="ui-value">${Math.round(player.health)}</span>`;
+    cpuInfo.innerHTML = `USA 🛡️: <span class="ui-value">${Math.round(cpu.health)}</span>`;
 
-            if(currentPlayer === player){
-                angleInfo.textContent = `Угол: ${Math.round(player.angle)}`;
-                forceInfo.textContent = `Сила: ${Math.round(player.force)}`;
-            }
-            let windText = (wind > 0 ? ">>" : wind < 0 ? "<<" : "--");
-            const windStrength = Math.round((Math.abs(wind) / MAX_WIND) * 10);
-            windInfo.textContent = `Ветер: ${windText} ${windStrength}`;
-            playerBonusInfo.textContent = `Топливо: ${Math.round(player.fuel)} | Мощь: ${player.powerShells} | Щит: ${Math.round(player.shieldHealth)} | Кассета: ${player.clusterShells} | Безветрие: ${player.windlessShells}`; // ← ИЗМЕНЕНИЕ
-            aimingInfo.textContent = `Прицел(T): ${showAimingLine ? 'ВКЛ' : 'ВЫКЛ'}`;
-        }
+    if (currentPlayer === player) {
+        angleInfo.innerHTML = `Угол: <span class="ui-value">${Math.round(player.angle)}</span>`;
+        forceInfo.innerHTML = `Сила: <span class="ui-value">${Math.round(player.force)}</span>`;
+    }
+
+    let windText = (wind > 0 ? ">>" : wind < 0 ? "<<" : "--");
+    const windStrength = Math.round((Math.abs(wind) / MAX_WIND) * 10);
+    windInfo.innerHTML = `Ветер: ${windText} <span class="ui-value">${windStrength}</span>`;
+
+    playerBonusInfo.innerHTML = `Топливо: <span class="ui-value">${Math.round(player.fuel)}</span> | Мощь: <span class="ui-value">${player.powerShells}</span> | Щит: <span class="ui-value">${Math.round(player.shieldHealth)}</span> | Кассета: <span class="ui-value">${player.clusterShells}</span> | Безветрие: <span class="ui-value">${player.windlessShells}</span>`;
+
+    aimingInfo.textContent = `Прицел(T): ${showAimingLine ? 'ВКЛ' : 'ВЫКЛ'}`;
+}
         
         function showMessage(text, duration = null) {
             if(messageTimeout) clearTimeout(messageTimeout);
