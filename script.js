@@ -45,6 +45,7 @@
                 this.x = x; this.y = 0; this.color = color; this.angle = 45; this.force = 50;
                 this.direction = direction; this.health = MAX_HEALTH; this.fuel = 100;
                 this.powerShells = 0; this.shieldHealth = 0; this.clusterShells = 0;
+                this.windlessShells = 0; // ← НОВАЯ СТРОКА
             }
             draw() {
                 if (this.health <= 0) return;
@@ -126,9 +127,11 @@
         }
 
         class Projectile {
-            constructor(x, y, vx, vy, isPowerful, isCluster) {
-                this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.path = [{x, y}];
+            // Добавляем isWindless в конструктор
+            constructor(x, y, vx, vy, isPowerful, isCluster, isWindless) { // ← ИЗМЕНЕНИЕ
+                this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.path = [{ x, y }];
                 this.isPowerful = isPowerful; this.isCluster = isCluster;
+                this.isWindless = isWindless; // ← НОВАЯ СТРОКА
             }
             update() {
                 for (let i = 0; i < 3; i++) {
@@ -137,22 +140,36 @@
                     const speed = Math.random() * 2 + 1;
                     particles.push(new Particle(particleX, particleY, angle, speed, 15, 'rgba(255, 200, 100, 0.8)'));
                 }
-                this.vx += wind; this.vy += GRAVITY; this.x += this.vx; this.y += this.vy;
-                this.path.push({x: this.x, y: this.y});
+                // --- ГЛАВНАЯ ЛОГИКА ---
+                // Применяем ветер, только если это НЕ безветренный снаряд
+                if (!this.isWindless) {
+                    this.vx += wind;
+                }
+                // --- КОНЕЦ ГЛАВНОЙ ЛОГИКИ ---
+
+                this.vy += GRAVITY; this.x += this.vx; this.y += this.vy;
+                this.path.push({ x: this.x, y: this.y });
                 if (this.path.length > 30) this.path.shift();
             }
             draw() {
                 ctx.beginPath();
                 ctx.moveTo(this.path[0].x, this.path[0].y);
                 for (let i = 1; i < this.path.length; i++) ctx.lineTo(this.path[i].x, this.path[i].y);
-                if (this.isPowerful) { ctx.strokeStyle = 'rgba(255, 165, 0, 0.7)'; ctx.lineWidth = 4; } 
-                else if (this.isCluster) { ctx.strokeStyle = 'rgba(255, 105, 180, 0.7)'; ctx.lineWidth = 4; } 
+
+                if (this.isPowerful) { ctx.strokeStyle = 'rgba(255, 165, 0, 0.7)'; ctx.lineWidth = 4; }
+                else if (this.isCluster) { ctx.strokeStyle = 'rgba(255, 105, 180, 0.7)'; ctx.lineWidth = 4; }
+                else if (this.isWindless) { ctx.strokeStyle = 'rgba(200, 255, 255, 0.7)'; ctx.lineWidth = 3; } // ← НОВЫЙ СЛЕД
                 else { ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)'; ctx.lineWidth = 2; }
                 ctx.stroke();
+
                 if (this.isPowerful) ctx.fillStyle = '#FFA500';
                 else if (this.isCluster) ctx.fillStyle = '#FF69B4';
+                else if (this.isWindless) ctx.fillStyle = '#FFFFFF'; // ← НОВЫЙ ЦВЕТ СНАРЯДА
                 else ctx.fillStyle = 'yellow';
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.isPowerful || this.isCluster ? 6: 4, 0, Math.PI * 2); ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.isPowerful || this.isCluster || this.isWindless ? 6 : 4, 0, Math.PI * 2); // ← ИЗМЕНЕНИЕ
+                ctx.fill();
             }
         }
 
@@ -210,8 +227,9 @@
                 const pulse = Math.sin(Date.now() * 0.005) * 0.1 + 0.9;
                 ctx.scale(pulse, pulse); ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
                 const typeMap = {
-                    'MOVE': { color: '#00FF00', char: 'M'}, 'POWER_SHELL': { color: '#FFA500', char: 'P'},
-                    'SHIELD': { color: '#00BFFF', char: 'S'}, 'CLUSTER': { color: '#FF69B4', char: 'C'}
+                    'MOVE': { color: '#00FF00', char: 'M' }, 'POWER_SHELL': { color: '#FFA500', char: 'P' },
+                    'SHIELD': { color: '#00BFFF', char: 'S' }, 'CLUSTER': { color: '#FF69B4', char: 'C' },
+                    'WINDLESS_SHELL': { color: '#E0E0E0', char: 'W' } // ← НОВАЯ СТРОКА (W - Wind)
                 };
                 const config = typeMap[this.type];
                 ctx.fillStyle = config.color.slice(0, 7) + 'B3'; ctx.strokeStyle = config.color;
@@ -339,18 +357,20 @@ function generateTerrain() {
             ctx.fill();
         }
 
-        function spawnBonus() {
-            if (bonuses.length > 2) return;
-            if (Math.random() < BONUS_SPAWN_CHANCE) {
-                const typeRoll = Math.random();
-                let type;
-                if (typeRoll < 0.25) type = 'MOVE';
-                else if (typeRoll < 0.50) type = 'POWER_SHELL';
-                else if (typeRoll < 0.75) type = 'SHIELD';
-                else type = 'CLUSTER';
-                bonuses.push(new Bonus(type));
-            }
-        }
+function spawnBonus() {
+    if (bonuses.length > 2) return;
+    if (Math.random() < BONUS_SPAWN_CHANCE) {
+        const typeRoll = Math.random();
+        let type;
+        // Теперь 5 типов, делим 1.0 на 5, шаг - 0.2
+        if (typeRoll < 0.20) type = 'MOVE';
+        else if (typeRoll < 0.40) type = 'POWER_SHELL';
+        else if (typeRoll < 0.60) type = 'SHIELD';
+        else if (typeRoll < 0.80) type = 'CLUSTER';
+        else type = 'WINDLESS_SHELL'; // ← НОВЫЙ ТИП
+        bonuses.push(new Bonus(type));
+    }
+}
 
         function drawScene() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -391,7 +411,7 @@ function generateTerrain() {
             let windText = (wind > 0 ? ">>" : wind < 0 ? "<<" : "--");
             const windStrength = Math.round((Math.abs(wind) / MAX_WIND) * 10);
             windInfo.textContent = `Ветер: ${windText} ${windStrength}`;
-            playerBonusInfo.textContent = `Топливо: ${Math.round(player.fuel)} | Мощь: ${player.powerShells} | Щит: ${Math.round(player.shieldHealth)} | Кассета: ${player.clusterShells}`;
+            playerBonusInfo.textContent = `Топливо: ${Math.round(player.fuel)} | Мощь: ${player.powerShells} | Щит: ${Math.round(player.shieldHealth)} | Кассета: ${player.clusterShells} | Безветрие: ${player.windlessShells}`; // ← ИЗМЕНЕНИЕ
             aimingInfo.textContent = `Прицел(T): ${showAimingLine ? 'ВКЛ' : 'ВЫКЛ'}`;
         }
         
@@ -470,20 +490,25 @@ function generateTerrain() {
             setTimeout(fire, 1500);
         }
 
-        function fire() {
-            if (projectile) return;
-            const startPos = currentPlayer.getTurretEnd();
-            const angleRad = (currentPlayer.direction===1)?currentPlayer.angle*Math.PI/180:(180-currentPlayer.angle)*Math.PI/180;
-            const power=currentPlayer.force/10, vx=Math.cos(angleRad)*power, vy=-Math.sin(angleRad)*power;
-            let isPowerfulShot = false, isClusterShot = false;
-            if (currentPlayer.powerShells > 0) {
-                currentPlayer.powerShells--; isPowerfulShot = true;
-            } else if (currentPlayer.clusterShells > 0) {
-                currentPlayer.clusterShells--; isClusterShot = true;
-            }
-            projectile = new Projectile(startPos.x, startPos.y, vx, vy, isPowerfulShot, isClusterShot);
-            updateUI();
-        }
+function fire() {
+    if (projectile) return;
+    const startPos = currentPlayer.getTurretEnd();
+    const angleRad = (currentPlayer.direction === 1) ? currentPlayer.angle * Math.PI / 180 : (180 - currentPlayer.angle) * Math.PI / 180;
+    const power = currentPlayer.force / 10, vx = Math.cos(angleRad) * power, vy = -Math.sin(angleRad) * power;
+
+    let isPowerfulShot = false, isClusterShot = false, isWindlessShot = false; // ← ИЗМЕНЕНИЕ
+    if (currentPlayer.powerShells > 0) {
+        currentPlayer.powerShells--; isPowerfulShot = true;
+    } else if (currentPlayer.clusterShells > 0) {
+        currentPlayer.clusterShells--; isClusterShot = true;
+    } else if (currentPlayer.windlessShells > 0) { // ← НОВЫЙ БЛОК
+        currentPlayer.windlessShells--; isWindlessShot = true;
+    }
+
+    // Передаем все флаги в конструктор
+    projectile = new Projectile(startPos.x, startPos.y, vx, vy, isPowerfulShot, isClusterShot, isWindlessShot); // ← ИЗМЕНЕНИЕ
+    updateUI();
+}
         
         function checkGameOver() {
             if (gameState !== 'PLAYING') return;
@@ -503,10 +528,11 @@ function generateTerrain() {
                 if (!bonus.onGround) continue;
                 const dist=Math.sqrt(Math.pow(projectile.x - bonus.x, 2) + Math.pow(projectile.y - bonus.y, 2));
                 if (dist < bonus.radius + 10) {
-                    if(bonus.type==='MOVE') currentPlayer.fuel+=50;
-                    if(bonus.type==='POWER_SHELL') currentPlayer.powerShells+=3;
-                    if(bonus.type==='SHIELD') currentPlayer.shieldHealth+=50;
-                    if(bonus.type==='CLUSTER') currentPlayer.clusterShells+=3;
+                    if (bonus.type === 'MOVE') currentPlayer.fuel += 50;
+                    if (bonus.type === 'POWER_SHELL') currentPlayer.powerShells += 3;
+                    if (bonus.type === 'SHIELD') currentPlayer.shieldHealth += 50;
+                    if (bonus.type === 'CLUSTER') currentPlayer.clusterShells += 3;
+                    if (bonus.type === 'WINDLESS_SHELL') currentPlayer.windlessShells += 3; // ← НОВАЯ СТРОКА
                     bonuses.splice(i, 1);
                     updateUI();
                 }
